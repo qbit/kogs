@@ -75,7 +75,7 @@ in {
         Group = cfg.group;
 
         ExecStart = ''
-          ${cfg.package}/bin/kogs -listen ${cfg.listen} ${lib.optionalString (cfg.registration) "-reg=false"}
+          ${cfg.package}/bin/kogs -listen ${cfg.listen} ${lib.optionalString (!cfg.registration) "-reg=false"}
         '';
       };
     };
