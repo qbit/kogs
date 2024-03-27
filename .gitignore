@@ -1,0 +1,6 @@
+.direnv
+*.bak
+result
+tags
+db
+kogs
