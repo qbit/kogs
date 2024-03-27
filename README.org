@@ -1,3 +1,0 @@
-# kogs
-
-A [koreader](http://koreader.rocks/) sync server.
