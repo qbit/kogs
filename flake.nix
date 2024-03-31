@@ -23,10 +23,10 @@
         {
           kogs = pkgs.buildGoModule {
             pname = "kogs";
-            version = "v0.1.0";
+            version = "v1.0.0";
             src = ./.;
 
-            vendorHash = "sha256-8AviacBPdpvuII/2symR1IgcT0Bf5OL6Do/6Go8TD1A=";
+            vendorHash = null;
           };
         });
 
