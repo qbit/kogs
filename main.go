@@ -8,11 +8,8 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"path"
 	"strconv"
 	"time"
-
-	"github.com/peterbourgon/diskv/v3"
 )
 
 type User struct {
@@ -34,14 +31,14 @@ func (u *User) Created() []byte {
 	return j
 }
 
-func authUserFromHeader(d *diskv.Diskv, r *http.Request) (*User, error) {
+func authUserFromHeader(d *Store, r *http.Request) (*User, error) {
 	un := r.Header.Get("x-auth-user")
 	uk := r.Header.Get("x-auth-key")
 
 	u := &User{
 		Username: un,
 	}
-	storedKey, err := d.Read(u.Key())
+	storedKey, err := d.Get(u.Key())
 	if err != nil {
 		// No user
 		return nil, err
@@ -69,43 +66,43 @@ func (p *Progress) DocKey() string {
 	return fmt.Sprintf("user:%s:document:%s", p.User.Username, p.Document)
 }
 
-func (p *Progress) Save(d *diskv.Diskv) {
-	d.Write(p.DocKey()+"_percent", []byte(fmt.Sprintf("%f", p.Percentage)))
-	d.Write(p.DocKey()+"_progress", []byte(p.Progress))
-	d.Write(p.DocKey()+"_device", []byte(p.Device))
-	d.Write(p.DocKey()+"_device_id", []byte(p.DeviceID))
-	d.Write(p.DocKey()+"_timestamp", []byte(fmt.Sprintf("%d", (time.Now().Unix()))))
+func (p *Progress) Save(d *Store) {
+	d.Set(p.DocKey()+"_percent", fmt.Sprintf("%f", p.Percentage))
+	d.Set(p.DocKey()+"_progress", p.Progress)
+	d.Set(p.DocKey()+"_device", p.Device)
+	d.Set(p.DocKey()+"_device_id", p.DeviceID)
+	d.Set(p.DocKey()+"_timestamp", fmt.Sprintf("%d", (time.Now().Unix())))
 }
 
-func (p *Progress) Get(d *diskv.Diskv) error {
+func (p *Progress) Get(d *Store) error {
 	if p.Document == "" {
 		return fmt.Errorf("invalid document")
 	}
-	pct, err := d.Read(p.DocKey() + "_percent")
+	pct, err := d.Get(p.DocKey() + "_percent")
 	if err != nil {
 		return err
 	}
 	p.Percentage, _ = strconv.ParseFloat(string(pct), 64)
 
-	prog, err := d.Read(p.DocKey() + "_progress")
+	prog, err := d.Get(p.DocKey() + "_progress")
 	if err != nil {
 		return err
 	}
 	p.Progress = string(prog)
 
-	dev, err := d.Read(p.DocKey() + "_device")
+	dev, err := d.Get(p.DocKey() + "_device")
 	if err != nil {
 		return err
 	}
 	p.Device = string(dev)
 
-	devID, err := d.Read(p.DocKey() + "_device_id")
+	devID, err := d.Get(p.DocKey() + "_device_id")
 	if err != nil {
 		return err
 	}
 	p.DeviceID = string(devID)
 
-	ts, err := d.Read(p.DocKey() + "_timestamp")
+	ts, err := d.Get(p.DocKey() + "_timestamp")
 	if err != nil {
 		return err
 	}
@@ -134,15 +131,20 @@ func httpLog(r *http.Request) {
 func main() {
 	reg := flag.Bool("reg", true, "enable user registration")
 	listen := flag.String("listen", ":8383", "interface and port to listen on")
+	dbDir := flag.String("db", "db", "full path to database directory")
 	flag.Parse()
 
-	log.Printf("Storing data in: %q", path.Join(os.Getenv("PWD"), "db"))
+	err := os.MkdirAll(*dbDir, 0750)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	d := diskv.New(diskv.Options{
-		BasePath:     "db",
-		Transform:    func(s string) []string { return []string{} },
-		CacheSizeMax: 1024 * 1024,
-	})
+	d, err := NewStore(*dbDir)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	log.Printf("Storing data in: %q", *dbDir)
 
 	if !*reg {
 		log.Println("registration disabled")
@@ -166,9 +168,9 @@ func main() {
 			return
 		}
 
-		_, err = d.Read(u.Key())
+		_, err = d.Get(u.Key())
 		if err != nil {
-			d.Write(u.Key(), []byte(u.Password))
+			d.Set(u.Key(), u.Password)
 		} else {
 			log.Println("user exists")
 			http.Error(w, "Username is already registered", http.StatusPaymentRequired)
