@@ -39,8 +39,14 @@ in {
 
       dataDir = mkOption {
         type = types.path;
-        default = "/var/lib/kogs";
-        description = "Path kogs will use to store the sqlite database";
+        default = "/var/lib/kogs/";
+        description = "Path kogs will use to store the database";
+      };
+
+      dbDir = mkOption {
+        type = types.path;
+        default = "${cfg.dataDir}/db";
+        description = "Path kogs will use to store the database files";
       };
 
       package = mkOption {
@@ -75,7 +81,7 @@ in {
         Group = cfg.group;
 
         ExecStart = ''
-          ${cfg.package}/bin/kogs -listen ${cfg.listen} ${lib.optionalString (!cfg.registration) "-reg=false"}
+          ${cfg.package}/bin/kogs -listen ${cfg.listen} -db ${cfg.dbDir} ${lib.optionalString (cfg.registration == false) "-reg=false"}
         '';
       };
     };
