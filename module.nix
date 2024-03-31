@@ -74,6 +74,8 @@ in {
         User = cfg.user;
         Group = cfg.group;
 
+        Restart = "always";
+
         ExecStart = ''
           ${cfg.package}/bin/kogs -listen ${cfg.listen} ${lib.optionalString (!cfg.registration) "-reg=false"}
         '';
