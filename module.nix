@@ -39,7 +39,7 @@ in {
 
       dataDir = mkOption {
         type = types.path;
-        default = "/var/lib/kogs/";
+        default = "/var/lib/kogs";
         description = "Path kogs will use to store the database";
       };
 
