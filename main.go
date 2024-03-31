@@ -7,6 +7,8 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"path"
 	"strconv"
 	"time"
 
@@ -133,6 +135,9 @@ func main() {
 	reg := flag.Bool("reg", true, "enable user registration")
 	listen := flag.String("listen", ":8383", "interface and port to listen on")
 	flag.Parse()
+
+	log.Printf("Storing data in: %q", path.Join(os.Getenv("PWD"), "db"))
+
 	d := diskv.New(diskv.Options{
 		BasePath:     "db",
 		Transform:    func(s string) []string { return []string{} },
