@@ -172,7 +172,7 @@ func main() {
 		if err != nil {
 			d.Set(u.Key(), u.Password)
 		} else {
-			log.Println("user exists")
+			log.Println("user exists", err)
 			http.Error(w, "Username is already registered", http.StatusPaymentRequired)
 			return
 		}
