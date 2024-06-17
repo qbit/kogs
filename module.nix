@@ -71,8 +71,7 @@ in {
     systemd.services.kogs = {
       enable = true;
       description = "kogs server";
-      wantedBy = [ "network-online.target" ];
-      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
 
       environment = { HOME = "${cfg.dataDir}"; };
 
