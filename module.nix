@@ -72,6 +72,8 @@ in {
       enable = true;
       description = "kogs server";
       wants = [ "network-online.target" ];
+      after = [ "network-online.target" ];
+      wantedBy = [ "multi-user.target" ];
 
       environment = { HOME = "${cfg.dataDir}"; };
 
